@@ -1,4 +1,5 @@
 from math import gcd
+import sched
 import PeriodicTask
 import SimulationSchedule
 
@@ -11,8 +12,8 @@ taskPool.append(task1)
 taskPool.append(task2)
 taskPool.append(task3)
 
-# 1 is FCFS, 2 is RM, 3 is DM
-schedulingAlgo = 2
+# 1 is FCFS, 2 is RM, 3 is DM, 4 is EDF, and 5 is LST
+schedulingAlgo = 4
 
 # Sorting Functions
 def sortPeriod(task):
@@ -34,15 +35,21 @@ def calculateHyperPeriod(taskPool):
 
 
 # Sort task pool based on scheduling algorithm
-if (schedulingAlgo == 1):
+if schedulingAlgo == 1:
     # FCFS
     sortedTaskPool = sorted(taskPool, key=sortReadyTime)
-elif (schedulingAlgo == 2):
+elif schedulingAlgo == 2:
     # RM
     sortedTaskPool = sorted(taskPool, key=sortPeriod)
-elif ():
+elif schedulingAlgo == 3:
     # DM
     sortedTaskPool = sorted(taskPool, key=sortDeadline)
+elif schedulingAlgo == 4:
+    # EDF
+    sortedTaskPool = sorted(taskPool, key=sortReadyTime)
+elif schedulingAlgo == 5:
+    # LST
+    sortedTaskPool = sorted(taskPool, key=sortReadyTime)
 
 
 # Generate all the jobs for each task.  Order is important here for the static scheduling algorithm, because the task pool has been sorted by priority already
@@ -58,10 +65,14 @@ for task in sortedTaskPool:
         offset = i * task.period
         finalTaskPool.append(PeriodicTask.PeriodicTask(task.id, task.period, task.readyTime + offset, task.deadline + offset, task.executionTime))
 
-# Insert all the tasks into the schedule.
-simSchedule = SimulationSchedule.SimulationSchedule()
-for task in finalTaskPool:
-    simSchedule.insert(task)
-simSchedule.print()
 
+simSchedule = SimulationSchedule.SimulationSchedule()
+if schedulingAlgo == 1 or schedulingAlgo == 2 or schedulingAlgo == 3:
+    # Insert all the tasks into the schedule.
+    for task in finalTaskPool:
+        simSchedule.insert(task)
+    simSchedule.print()
+elif schedulingAlgo == 4 or schedulingAlgo == 5:
+    simSchedule.simulateDynamicSchedule(fullSimulationWindow, finalTaskPool, schedulingAlgo)
+    simSchedule.print()
 

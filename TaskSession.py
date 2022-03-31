@@ -1,4 +1,7 @@
 class TaskSession(object):
+    def __init__(self):
+        pass
+
     def __init__(self, startTime, endTime, task):
         self.startTime = startTime
         self.endTime = endTime

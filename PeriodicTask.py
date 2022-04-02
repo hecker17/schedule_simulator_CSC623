@@ -8,7 +8,7 @@ class PeriodicTask(object):
         self.remainingExecutionTime = executionTime
 
     def print(self):
-        print("id: " + str(self.id) + " period: " + str(self.period) + " readyTime: " + str(self.readyTime) + " deadline: " + str(self.deadline) + " executionTime: " + str(self.executionTime))
+        print("id: " + str(self.id) + " period: " + str(self.period) + " readyTime: " + str(self.readyTime) + " deadline: " + str(self.deadline) + " executionTime: " + str(self.executionTime) + " remainingExecutionTime: " + str(self.remainingExecutionTime))
         
     def setRemainingExecutionTime(self, time):
         self.remainingExecutionTime = time

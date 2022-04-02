@@ -1,4 +1,5 @@
 from selectors import SelectorKey
+from signal import pause
 import TaskSession
 import PeriodicTask
 import SortingFunctions
@@ -58,22 +59,36 @@ class SimulationSchedule(object):
                 self.scheduledTaskPool.append(task)
             self.scheduledTaskPool = sorted(self.scheduledTaskPool, key=self.sortStartTime)
 
+    def calculateTaskPriority(self, currentlyExecutingTask, availableTaskPool, schedulingAlgo):
+        currentlyExecutingTask = None
+        if len(availableTaskPool) > 0:
+            if schedulingAlgo == 4:
+                for task in availableTaskPool:
+                    if currentlyExecutingTask is None:
+                        currentlyExecutingTask = task
+                    elif task.deadline < currentlyExecutingTask.deadline:
+                        currentlyExecutingTask = task
+            elif schedulingAlgo == 5:
+                pass
+
     def simulateDynamicSchedule(self, simulationTimeLength, taskPool, schedulingAlgo):
         # Sort the task pool by start time just in case
         taskPool = sorted(taskPool, key=self.sortReadyTime)
         availableTaskPool = []
-        for task in taskPool:
-            task.print()
-            print(task)
         
         # Begin iterating over the list
         currentTime = 0
         nextTaskAvailableTime = 0
+        currentlyExecutingTask = None
         while currentTime <= simulationTimeLength:
             # Get all the tasks at the current time and place them in the available task pool
+            print("===============================================================================================================")
+            print("Current Time: " + str(currentTime))
             while nextTaskAvailableTime == currentTime:
                 if len(taskPool) == 0:
                     print("No more unavailable tasks...")
+                    # Plus 1 is better?
+                    nextTaskAvailableTime = simulationTimeLength + 1
                     break
 
                 task = taskPool.pop(0)
@@ -87,8 +102,16 @@ class SimulationSchedule(object):
                 # But if the task was not ready we stop checking the next task in the list.
                 nextTaskAvailableTime = task.readyTime
 
+            print("Available tasks...")
+            for task in availableTaskPool:
+                task.print()
+            print("Unavailalbe tasks...")
+            for task in taskPool:
+                task.print()
+
             # Calculate the priority of the available tasks
-            currentlyExecutingTask = None
+            print("======Priorities======")
+            #currentlyExecutingTask = None
             if len(availableTaskPool) > 0:
                 if schedulingAlgo == 4:
                     for task in availableTaskPool:
@@ -97,42 +120,69 @@ class SimulationSchedule(object):
                         elif task.deadline < currentlyExecutingTask.deadline:
                             currentlyExecutingTask = task
                 elif schedulingAlgo == 5:
-                    pass
+                    for task in availableTaskPool:
+                        print("Task id: " + str(task.id) + " : priority: " +str(task.deadline - currentTime - task.remainingExecutionTime))
+                        if currentlyExecutingTask is None:
+                            currentlyExecutingTask = task
+                        elif (task.deadline - currentTime - task.remainingExecutionTime) < (currentlyExecutingTask.deadline - currentTime - currentlyExecutingTask.remainingExecutionTime):
+                            currentlyExecutingTask = task
+            if currentlyExecutingTask is not None:
+                print("Currently Executing Task " + str(currentlyExecutingTask.id))
+                currentlyExecutingTask.print()
             else:
-                print("No tasks to execute...")
+                print("No Currently Executing Task")
 
             if len(taskPool) == 0 and len(availableTaskPool) == 1:
                 self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + task.remainingExecutionTime, currentlyExecutingTask))
                 currentTime = simulationTimeLength + 1
             elif nextTaskAvailableTime < currentTime + 1:
-                currentlyExecutingTask.print()
                 if currentlyExecutingTask is not None:
-                    if nextTaskAvailableTime >= currentTime + currentlyExecutingTask.remainingExecutionTime:
-                        self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, nextTaskAvailableTime, currentlyExecutingTask))
-                        nextTaskAvailableTime = currentTime + currentlyExecutingTask.remainingExecutionTime
+                    if currentTime + currentlyExecutingTask.remainingExecutionTime <= nextTaskAvailableTime:
+                        self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + currentlyExecutingTask.remainingExecutionTime, currentlyExecutingTask))
+                        currentTime = currentTime + currentlyExecutingTask.remainingExecutionTime
                         availableTaskPool.remove(currentlyExecutingTask)
+                        currentlyExecutingTask = None
                     else:
                         self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, nextTaskAvailableTime, currentlyExecutingTask))
-                        currentlyExecutingTask.setRemainingExecutionTime(currentlyExecutingTask.executionTime - (nextTaskAvailableTime - currentTime))
-                currentTime = nextTaskAvailableTime
+                        elapsedExecutionTime = nextTaskAvailableTime - currentTime
+                        currentlyExecutingTask.remainingExecutionTime = currentlyExecutingTask.remainingExecutionTime - elapsedExecutionTime
+                        currentTime = nextTaskAvailableTime
+                else:
+                    currentTime = nextTaskAvailableTime
             else:
                 if currentlyExecutingTask is not None:
                     if currentlyExecutingTask.remainingExecutionTime <= 1:
-                        self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + task.remainingExecutionTime, currentlyExecutingTask))
-                        nextTaskAvailableTime = currentTime + currentlyExecutingTask.remainingExecutionTime
-                        currentTime = nextTaskAvailableTime
+                        self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + currentlyExecutingTask.remainingExecutionTime, currentlyExecutingTask))
+                        currentTime = currentTime + currentlyExecutingTask.remainingExecutionTime
                         availableTaskPool.remove(currentlyExecutingTask)
+                        currentlyExecutingTask = None
                     else:
                         self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + 1, currentlyExecutingTask))
-                        currentlyExecutingTask.setRemainingExecutionTime(currentlyExecutingTask.remainingExecutionTime - 1)
+                        currentlyExecutingTask.remainingExecutionTime = currentlyExecutingTask.remainingExecutionTime - 1
                         currentTime += 1
                 else:
                     currentTime += 1
 
-        # After we finish our dynamic schedule we will be left with many task sessions that are a maximum of 1 time unit long...
-        # We need to stitch adjacent task sessions of the same task back together
+        # # After we finish our dynamic schedule we will be left with many task sessions that are a maximum of 1 time unit long...
+        # # We need to stitch adjacent task sessions of the same task back together
+        # baseTaskSession = None
+        # consolidatedTaskPool = []
+        # for taskSession in self.scheduledTaskPool:
+        #     if baseTaskSession is None:
+        #         baseTaskSession = taskSession
+        #     else:
+        #         if baseTaskSession.task.id == taskSession.task.id:
+        #             # Create new task session that is the combination of the base and current task sessions
+        #             baseTaskSession = TaskSession.TaskSession(baseTaskSession.startTime, taskSession.endTime, baseTaskSession.task)
+        #         else:
+        #             consolidatedTaskPool.append(baseTaskSession)
+        #             baseTaskSession = taskSession
+        # # Probably need to insert final task session
+        # consolidatedTaskPool.append(baseTaskSession)
+        # self.scheduledTaskPool = consolidatedTaskPool
 
     def print(self):
+        print("Size of finalTaskPool: " + str(len(self.scheduledTaskPool)))
         for task in self.scheduledTaskPool:
             task.print()
         

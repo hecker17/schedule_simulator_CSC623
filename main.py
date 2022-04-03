@@ -2,6 +2,7 @@ from math import gcd
 import sched
 from signal import pause
 import PeriodicTask
+import AperiodicTask
 import SimulationSchedule
 
 # Set up sample tasks
@@ -17,7 +18,9 @@ taskPool.append(task2)
 taskPool.append(task3)
 
 # 1 is FCFS, 2 is RM, 3 is DM, 4 is EDF, and 5 is LST
-schedulingAlgo = 5
+periodicSchedulingAlgo = 5
+# 1 is Polling Server, 2 is Deferrable Server
+aperiodicSchedulingAlgo = 1
 
 # Sorting Functions
 def sortPeriod(task):
@@ -39,19 +42,19 @@ def calculateHyperPeriod(taskPool):
 
 
 # Sort task pool based on scheduling algorithm
-if schedulingAlgo == 1:
+if periodicSchedulingAlgo == 1:
     # FCFS
     sortedTaskPool = sorted(taskPool, key=sortReadyTime)
-elif schedulingAlgo == 2:
+elif periodicSchedulingAlgo == 2:
     # RM
     sortedTaskPool = sorted(taskPool, key=sortPeriod)
-elif schedulingAlgo == 3:
+elif periodicSchedulingAlgo == 3:
     # DM
     sortedTaskPool = sorted(taskPool, key=sortDeadline)
-elif schedulingAlgo == 4:
+elif periodicSchedulingAlgo == 4:
     # EDF
     sortedTaskPool = sorted(taskPool, key=sortReadyTime)
-elif schedulingAlgo == 5:
+elif periodicSchedulingAlgo == 5:
     # LST
     sortedTaskPool = sorted(taskPool, key=sortReadyTime)
 
@@ -70,12 +73,22 @@ for task in sortedTaskPool:
 
 print("Size of finalTaskPool: " + str(len(finalTaskPool)))
 simSchedule = SimulationSchedule.SimulationSchedule()
-if schedulingAlgo == 1 or schedulingAlgo == 2 or schedulingAlgo == 3:
+if periodicSchedulingAlgo == 1 or periodicSchedulingAlgo == 2 or periodicSchedulingAlgo == 3:
     # Insert all the tasks into the schedule.
     for task in finalTaskPool:
         simSchedule.insert(task)
     simSchedule.print()
-elif schedulingAlgo == 4 or schedulingAlgo == 5:
-    simSchedule.simulateDynamicSchedule(fullSimulationWindow, finalTaskPool, schedulingAlgo)
+elif periodicSchedulingAlgo == 4 or periodicSchedulingAlgo == 5:
+    simSchedule.simulateDynamicSchedule(fullSimulationWindow, finalTaskPool, periodicSchedulingAlgo)
     simSchedule.print()
 
+# Test Aperiodic Insertion
+simSchedule.setAperiodicServerParameters(aperiodicSchedulingAlgo, fullSimulationWindow, 20, 5)
+simSchedule.insertAperiodic(AperiodicTask.AperiodicTask(4,25,6))
+simSchedule.insertAperiodic(AperiodicTask.AperiodicTask(5,45,3))
+simSchedule.insertAperiodic(AperiodicTask.AperiodicTask(6,62,2))
+simSchedule.insertAperiodic(AperiodicTask.AperiodicTask(7,64,2))
+simSchedule.insertAperiodic(AperiodicTask.AperiodicTask(8,66,2))
+
+
+simSchedule.print()

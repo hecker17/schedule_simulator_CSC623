@@ -8,7 +8,7 @@ class TaskSession(object):
         self.task = task
 
     def print(self):
-        print(" task.id: " + str(self.task.id) + " startTime: " + str(self.startTime) + " endTime: " + str(self.endTime) + " task: " + str(self.task))
+        print("task.id: " + str(self.task.id) + " startTime: " + str(self.startTime) + " endTime: " + str(self.endTime) + " task: " + str(self.task))
 
     # This method is used when the scheduler is checking if the session has already ended
     def checkSessionEndBeforeTaskArrival(self, session, task):

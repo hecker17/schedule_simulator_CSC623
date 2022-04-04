@@ -9,6 +9,3 @@ class PeriodicTask(object):
 
     def print(self):
         print("Periodic Task : id: " + str(self.id) + " period: " + str(self.period) + " readyTime: " + str(self.readyTime) + " deadline: " + str(self.deadline) + " executionTime: " + str(self.executionTime) + " remainingExecutionTime: " + str(self.remainingExecutionTime))
-        
-    def setRemainingExecutionTime(self, time):
-        self.remainingExecutionTime = time

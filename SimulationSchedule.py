@@ -349,8 +349,23 @@ class SimulationSchedule(object):
         consolidatedTaskPool.append(baseTaskSession)
         self.scheduledTaskPool = consolidatedTaskPool
 
+    def trimAfter(self, fullSimulationWindow):
+        print("Trim the task that starts before the end of the fullSimulationWindow and ends after it to end right at it.")
+        print("Remove all tasks that start after the fullSimulationWindow.")
+        for session in self.scheduledTaskPool:
+            if session.startTime < fullSimulationWindow and session.endTime > fullSimulationWindow:
+                session.endTime = fullSimulationWindow
+            elif session.startTime >= fullSimulationWindow:
+                self.scheduledTaskPool.remove(session)
+
     def print(self):
         print("Size of finalTaskPool: " + str(len(self.scheduledTaskPool)))
         for task in self.scheduledTaskPool:
             task.print()
+
+    def printById(self, id):
+        print("Size of finalTaskPool: " + str(len(self.scheduledTaskPool)))
+        for session in self.scheduledTaskPool:
+            if session.task.id == id:
+                session.print()
         

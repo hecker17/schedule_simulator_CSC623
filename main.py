@@ -4,23 +4,23 @@ import AperiodicTask
 import SimulationSchedule
 import sys
 
+
 # Set up several core objects
 periodicTaskPool = []
 aperiodicTaskPool = []
 sortedPeriodicTaskPool = []
 simSchedule = SimulationSchedule.SimulationSchedule()
-
 # 1 is FCFS, 2 is RM, 3 is DM, 4 is EDF, and 5 is LST
-periodicSchedulingAlgo = 5
+periodicSchedulingAlgo = 0
 # 1 is Polling Server, 2 is Deferrable Server
-aperiodicSchedulingAlgo = 1
+aperiodicSchedulingAlgo = 0
 # The period length for the server scheduling algorithm
-serverPeriod = 20
+serverPeriod = 0
 # The available execution time for the server scheduling algorithm
-serverExecutionTime = 5
+serverExecutionTime = 0
+
 
 # Do some simple argument parsing
-print("Number of args: " + str(len(sys.argv)))
 if len(sys.argv) != 6:
     print("Incorrect number of arguments...")
     print("Usage:")
@@ -68,26 +68,16 @@ else:
 
     taskFile = open(str(sys.argv[5]), 'r')
     for line in taskFile.readlines():
-        print(line.replace('\n',''))
         taskValues = line.replace('\n','').split(',')
-        if taskValues[0] == 't':
-            periodicTaskPool.append(PeriodicTask.PeriodicTask(str(taskValues[0]) + str(taskValues[1]),int(taskValues[2]),float(taskValues[3]),float(taskValues[4]),float(taskValues[5])))
-        elif taskValues[0] == 'a':
-            aperiodicTaskPool.append(AperiodicTask.AperiodicTask(str(taskValues[0]) + str(taskValues[1]),float(taskValues[2]),float(taskValues[3])))
+        if taskValues[0][0] == 't':
+            periodicTaskPool.append(PeriodicTask.PeriodicTask(str(taskValues[0]),int(taskValues[1]),float(taskValues[2]),float(taskValues[3]),float(taskValues[4])))
+        elif taskValues[0][0] == 'a':
+            aperiodicTaskPool.append(AperiodicTask.AperiodicTask(str(taskValues[0]),float(taskValues[1]),float(taskValues[2])))
 
     for task in periodicTaskPool:
         task.print()
     for task in aperiodicTaskPool:
         task.print()
-
-
-# Set up sample tasks
-#task1 = PeriodicTask.PeriodicTask(1,20,0,15,3)
-#task2 = PeriodicTask.PeriodicTask(2,5,0,4,2)
-#task3 = PeriodicTask.PeriodicTask(3,10,0,3,2)
-task1 = PeriodicTask.PeriodicTask(1,35,0,33,10)
-task2 = PeriodicTask.PeriodicTask(2,35,4,28,3.5)
-task3 = PeriodicTask.PeriodicTask(3,35,5,29,10)
 
 
 # Sorting Functions
@@ -147,6 +137,7 @@ for task in sortedPeriodicTaskPool:
         offset = i * task.period
         finalPeriodicTaskPool.append(PeriodicTask.PeriodicTask(task.id + "_" + str(i), task.period, task.readyTime + offset, task.deadline + offset, task.executionTime))
 
+
 print("Size of finalPeriodicTaskPool: " + str(len(finalPeriodicTaskPool)))
 print("Size of sortedAperiodicTaskPool: " + str(len(sortedAperiodicTaskPool)))
 # Insert static priority tasks or simulate the dynamic schedule
@@ -158,14 +149,21 @@ elif periodicSchedulingAlgo == 4 or periodicSchedulingAlgo == 5:
     simSchedule.simulateDynamicSchedule(fullSimulationWindow, finalPeriodicTaskPool, periodicSchedulingAlgo)
     simSchedule.print()
 
+
 # Aperiodic task insertion
 simSchedule.setAperiodicServerParameters(aperiodicSchedulingAlgo, fullSimulationWindow, serverPeriod, serverExecutionTime)
 for task in sortedAperiodicTaskPool:
     simSchedule.insertAperiodic(task)
 
+
 # Trim all tasks outside fullSimulationWindow
 simSchedule.trimAfter(fullSimulationWindow)
+
 
 # Print final simulation schedule
 simSchedule.print()
 simSchedule.printById("t3_4")
+
+
+# Calculate and print the required metrics
+# Implement tomorrow due to the extension

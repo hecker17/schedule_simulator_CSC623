@@ -1,5 +1,3 @@
-from selectors import SelectorKey
-from signal import pause
 import TaskSession
 import PeriodicTask
 import SortingFunctions
@@ -19,11 +17,11 @@ class SimulationSchedule(object):
         # Create a list of all the server periods
         serverPeriodsInSimulation = math.ceil(fullSimulationWindow / serverPeriod)
         for period in range(serverPeriodsInSimulation):
-            self.serverPeriodList.append(ServerPeriod.ServerPeriod(period * serverPeriod, (period + 1) * serverPeriod ,serverExecutionTime))
-    
+            self.serverPeriodList.append(ServerPeriod.ServerPeriod(period * serverPeriod, (period + 1) * serverPeriod, serverExecutionTime))
+
     def sortStartTime(self, session):
         return session.startTime
-    
+
     def sortReadyTime(self, session):
         return session.readyTime
 
@@ -38,6 +36,9 @@ class SimulationSchedule(object):
             return True
         else:
             return False
+
+    def nextTaskExists(self, i):
+        return i + 1 >= len(self.scheduledTaskPool)
 
     def insert(self, task):
         if len(self.scheduledTaskPool) == 0:
@@ -73,8 +74,6 @@ class SimulationSchedule(object):
             self.scheduledTaskPool = sorted(self.scheduledTaskPool, key=self.sortStartTime)
 
     def insertAperiodic(self, task):
-        #print("Aperiodic Server Parameters: serverPeriod: " + str(self.serverPeriod))
-
         taskReleaseTime = task.releaseTime
         taskSessionsToBeAdded = []
 
@@ -86,20 +85,15 @@ class SimulationSchedule(object):
 
             if currentServerPeriod == None:
                 pass
-                #print("We could not find a server period compatible with our release time...")
             else:
-                #print("We have a valid currentServerPeriod! " + str(currentServerPeriod.periodStartTime) + " - " + str(currentServerPeriod.periodEndTime))
                 if currentServerPeriod.periodStartTime > taskReleaseTime:
                     taskReleaseTime = currentServerPeriod.periodStartTime
             
                 # Check if there is remaining execution time
                 serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime
-                #print("serverRemainingExecutionTime: " + str(serverRemainingExecutionTime))
                 if serverRemainingExecutionTime > 0 and task.remainingExecutionTime > 0:
-                    #print("There is some execution time still available...")
 
                     # Search for an opening in the scheduledTaskPool
-                    #print("===================================================================" + str(len(self.scheduledTaskPool)))
                     for i in range(len(self.scheduledTaskPool)):
                         session = self.scheduledTaskPool[i]
 
@@ -110,84 +104,74 @@ class SimulationSchedule(object):
                         elif session.endTime < taskReleaseTime:
                             pass
                         # If session ends before current period or begins after current period we can ignore it
-                        # If sessions are outside our current period
                         elif session.endTime <= currentServerPeriod.periodStartTime or session.startTime >= currentServerPeriod.periodEndTime:
                             pass
                         # If a session starts before we released and ends after we were released... Adjust our release time...
                         elif session.startTime <= taskReleaseTime and session.endTime >= taskReleaseTime:
-                            #print("!!")
-                            #session.print()
                             taskReleaseTime = session.endTime
 
-                            # Check if there even is a next task
-                            if i + 1 >= len(self.scheduledTaskPool):
-                                #print("Last task...")
-                                # If there is no next task just slap what we can on...
-                                
+                            if self.nextTaskExists(i):
                                 # Check how much execution time is left
                                 potentialTaskExecutionTime = task.remainingExecutionTime
                                 if task.remainingExecutionTime > currentServerPeriod.serverRemainingExecutionTime:
                                     potentialTaskExecutionTime = currentServerPeriod.serverRemainingExecutionTime
                                 # Find execution cutoff
                                 executionCutoff = currentServerPeriod.periodEndTime
-                                #print("taskReleaseTime : " + str(taskReleaseTime))
-                                #print("potentialTaskExecutionTime : " + str(potentialTaskExecutionTime))
-                                #print("executionCutoff : " + str(executionCutoff))
+                                if currentServerPeriod.serverExecutionStartTime is not None and self.aperiodicSchedulingAlgo == 1:
+                                    executionCutoff = currentServerPeriod.serverExecutionStartTime + currentServerPeriod.serverFullExecutionTime
 
-                                if taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
-                                    #print("We can execute the maximum amount")
+                                if taskReleaseTime >= executionCutoff:
+                                    # Most likely occurs when using the polling schedule algorithm and we miss the cutoff
+                                    pass
+                                elif taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
                                     task.remainingExecutionTime = task.remainingExecutionTime - potentialTaskExecutionTime
                                     currentServerPeriod.serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime - potentialTaskExecutionTime
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, taskReleaseTime + potentialTaskExecutionTime, task))
-                                    #print("Successful Insertion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                    #task.print()
+                                    if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
+                                        currentServerPeriod.serverExecutionStartTime = taskReleaseTime
                                 else:
                                     elapsedExecutionTime = executionCutoff - taskReleaseTime
-                                    #print("We can only execute a portion of the maximum : " + str(elapsedExecutionTime))
                                     task.remainingExecutionTime = task.remainingExecutionTime - elapsedExecutionTime
                                     currentServerPeriod.serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime - elapsedExecutionTime
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, executionCutoff, task))
-                                    #print("Successful Insertion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                    #task.print()
+                                    if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
+                                        currentServerPeriod.serverExecutionStartTime = taskReleaseTime
                             else:
                                 # Set our current session to the next session...
                                 session = self.scheduledTaskPool[i+1]
                                 if session.startTime == taskReleaseTime:
                                     pass
-                                    #print("There is no room!!!")
                                 else:
-                                    #print("There is some room!!!!")
                                     # Check how much execution time is left
                                     potentialTaskExecutionTime = task.remainingExecutionTime
                                     if task.remainingExecutionTime > currentServerPeriod.serverRemainingExecutionTime:
                                         potentialTaskExecutionTime = currentServerPeriod.serverRemainingExecutionTime
                                     # Find execution cutoff
                                     executionCutoff = session.startTime
-                                    if session.startTime > currentServerPeriod.periodEndTime:
+                                    if currentServerPeriod.serverExecutionStartTime is not None and self.aperiodicSchedulingAlgo == 1:
+                                        executionCutoff = currentServerPeriod.serverExecutionStartTime + currentServerPeriod.serverFullExecutionTime
+                                    elif session.startTime > currentServerPeriod.periodEndTime:
                                         executionCutoff = currentServerPeriod.periodEndTime
-                                    #print("potentialTaskExecutionTime : " + str(potentialTaskExecutionTime))
-                                    #print("executionCutoff : " + str(executionCutoff))
 
-                                    if taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
-                                        #print("We can execute the maximum amount")
+                                    if taskReleaseTime >= executionCutoff:
+                                        # Most likely occurs when using the polling schedule algorithm and we miss the cutoff
+                                        pass
+                                    elif taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
                                         task.remainingExecutionTime = task.remainingExecutionTime - potentialTaskExecutionTime
                                         currentServerPeriod.serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime - potentialTaskExecutionTime
                                         taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, taskReleaseTime + potentialTaskExecutionTime, task))
-                                        #print("Successful Insertion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                        #task.print()
+                                        if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
+                                            currentServerPeriod.serverExecutionStartTime = taskReleaseTime
                                     else:
                                         elapsedExecutionTime = executionCutoff - taskReleaseTime
-                                        #print("We can only execute a portion of the maximum : " + str(elapsedExecutionTime))
                                         task.remainingExecutionTime = task.remainingExecutionTime - elapsedExecutionTime
                                         currentServerPeriod.serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime - elapsedExecutionTime
                                         taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, executionCutoff, task))
-                                        #print("Successful Insertion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                        #task.print()
+                                        if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
+                                            currentServerPeriod.serverExecutionStartTime = taskReleaseTime
                         else:
                             # This occurs when we release before the current session begins... We can try and insert in here...
-
-                            # Check if there even is a next task
-                            if i + 1 >= len(self.scheduledTaskPool):
+                            if self.nextTaskExists(i):
                                 # I don't think we need to do this as our current session is the one in the "future"
                                 pass
                             else:
@@ -197,29 +181,28 @@ class SimulationSchedule(object):
                                     potentialTaskExecutionTime = currentServerPeriod.serverRemainingExecutionTime
                                 # Find execution cutoff
                                 executionCutoff = session.startTime
-                                if session.startTime > currentServerPeriod.periodEndTime:
+                                if currentServerPeriod.serverExecutionStartTime is not None and self.aperiodicSchedulingAlgo == 1:
+                                    executionCutoff = currentServerPeriod.serverExecutionStartTime + currentServerPeriod.serverFullExecutionTime
+                                elif session.startTime > currentServerPeriod.periodEndTime:
                                     executionCutoff = currentServerPeriod.periodEndTime
 
-                                if taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
-                                    #print("We can execute the maximum amount")
+                                if taskReleaseTime >= executionCutoff:
+                                    # Most likely occurs when using the polling schedule algorithm and we miss the cutoff
+                                    pass
+                                elif taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
                                     task.remainingExecutionTime = task.remainingExecutionTime - potentialTaskExecutionTime
                                     currentServerPeriod.serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime - potentialTaskExecutionTime
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, taskReleaseTime + potentialTaskExecutionTime, task))
-                                    #print("Successful Insertion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                    #task.print()
+                                    if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
+                                        currentServerPeriod.serverExecutionStartTime = taskReleaseTime
                                 else:
                                     elapsedExecutionTime = executionCutoff - taskReleaseTime
-                                    #print("We can only execute a portion of the maximum")
                                     task.remainingExecutionTime = task.remainingExecutionTime - elapsedExecutionTime
                                     currentServerPeriod.serverRemainingExecutionTime = currentServerPeriod.serverRemainingExecutionTime - elapsedExecutionTime
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, executionCutoff, task))
-                                    #print("Successful Insertion!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                    #task.print()
+                                    if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
+                                        currentServerPeriod.serverExecutionStartTime = taskReleaseTime
 
-        #print("################################################################")
-        #for session in taskSessionsToBeAdded:
-        #    session.print()
-        #print("################################################################")
         # Add all the task sessions to the scheduled task pool and then sort it based on start times
         for task in taskSessionsToBeAdded:
             self.scheduledTaskPool.append(task)
@@ -250,12 +233,8 @@ class SimulationSchedule(object):
         currentlyExecutingTask = None
         while currentTime <= simulationTimeLength:
             # Get all the tasks at the current time and place them in the available task pool
-            #print("===============================================================================================================")
-            #print("Current Time: " + str(currentTime))
             while nextTaskAvailableTime == currentTime:
                 if len(taskPool) == 0:
-                    #print("No more unavailable tasks...")
-                    # Plus 1 is better?
                     nextTaskAvailableTime = simulationTimeLength + 1
                     break
 
@@ -270,16 +249,7 @@ class SimulationSchedule(object):
                 # But if the task was not ready we stop checking the next task in the list.
                 nextTaskAvailableTime = task.readyTime
 
-            #print("Available tasks...")
-            #for task in availableTaskPool:
-            #    task.print()
-            #print("Unavailalbe tasks...")
-            #for task in taskPool:
-            #    task.print()
-
             # Calculate the priority of the available tasks
-            #print("======Priorities======")
-            #currentlyExecutingTask = None
             if len(availableTaskPool) > 0:
                 if schedulingAlgo == 4:
                     for task in availableTaskPool:
@@ -289,16 +259,10 @@ class SimulationSchedule(object):
                             currentlyExecutingTask = task
                 elif schedulingAlgo == 5:
                     for task in availableTaskPool:
-                        #print("Task id: " + str(task.id) + " : priority: " +str(task.deadline - currentTime - task.remainingExecutionTime))
                         if currentlyExecutingTask is None:
                             currentlyExecutingTask = task
                         elif (task.deadline - currentTime - task.remainingExecutionTime) < (currentlyExecutingTask.deadline - currentTime - currentlyExecutingTask.remainingExecutionTime):
                             currentlyExecutingTask = task
-            #if currentlyExecutingTask is not None:
-            #    print("Currently Executing Task " + str(currentlyExecutingTask.id))
-            #    currentlyExecutingTask.print()
-            #else:
-            #    print("No Currently Executing Task")
 
             if len(taskPool) == 0 and len(availableTaskPool) == 1:
                 self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + task.remainingExecutionTime, currentlyExecutingTask))
@@ -331,8 +295,8 @@ class SimulationSchedule(object):
                 else:
                     currentTime += 1
 
-        # # After we finish our dynamic schedule we will be left with many task sessions that are a maximum of 1 time unit long...
-        # # We need to stitch adjacent task sessions of the same task back together
+        # After we finish our dynamic schedule we will be left with many task sessions that are a maximum of 1 time unit long...
+        # We need to stitch adjacent task sessions of the same task back together
         baseTaskSession = None
         consolidatedTaskPool = []
         for taskSession in self.scheduledTaskPool:
@@ -345,16 +309,17 @@ class SimulationSchedule(object):
                 else:
                     consolidatedTaskPool.append(baseTaskSession)
                     baseTaskSession = taskSession
-        # # Probably need to insert final task session
+        # Probably need to insert final task session
         consolidatedTaskPool.append(baseTaskSession)
         self.scheduledTaskPool = consolidatedTaskPool
 
     def trimAfter(self, fullSimulationWindow):
-        print("Trim the task that starts before the end of the fullSimulationWindow and ends after it to end right at it.")
-        print("Remove all tasks that start after the fullSimulationWindow.")
         for session in self.scheduledTaskPool:
             if session.startTime < fullSimulationWindow and session.endTime > fullSimulationWindow:
+                reclaimedExecutionTime = session.endTime - fullSimulationWindow
                 session.endTime = fullSimulationWindow
+                # Verify the execution time reclaiming works correctly...
+                session.task.remainingExecutionTime = reclaimedExecutionTime
             elif session.startTime >= fullSimulationWindow:
                 self.scheduledTaskPool.remove(session)
 

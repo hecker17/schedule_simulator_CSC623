@@ -166,4 +166,51 @@ simSchedule.printById("t3_4")
 
 
 # Calculate and print the required metrics
-# Implement tomorrow due to the extension
+print("Metrics Report...")
+
+# 1. The actual start and finish time for each job in the simulation period
+for task in finalPeriodicTaskPool:
+    if task.id == "t3_4":
+        simSchedule.calculateActualStartAndEndTimes(task)
+        task.printActualTimes()
+    elif task.id == "t4_1":
+        simSchedule.calculateActualStartAndEndTimes(task)
+        task.printActualTimes()
+
+# 2. Any missed deadlines in the simulation period
+for task in finalPeriodicTaskPool:
+    if task.id == "t3_4":
+        if task.actualEndTime > task.deadline:
+            print("t3_4 deadline missed...")
+        else:
+            print("t3_4 finish before deadline...")
+    elif task.id == "t4_1":
+        if task.actualEndTime > task.deadline:
+            print("t4_1 deadline missed...")
+        else:
+            print("t4_1 finish before deadline...")
+
+# 3. Total system utilization
+# Don't actually need to run the simulation to calculate this value
+systemUtilization = 0
+for task in periodicTaskPool:
+    task.print()
+    taskUtilization = task.executionTime / task.period
+    print("Task Utilization = " + str(taskUtilization))
+    systemUtilization += taskUtilization
+
+print("System Utilization = " + str(systemUtilization))
+
+# 4. Total system density
+# Same as total system utilization, we don't actually need to run the simulation to calculate this value
+systemDensity = 0
+for task in periodicTaskPool:
+    task.print()
+    taskDensity = task.executionTime / min(task.deadline, task.period)
+    print("Task Density = " + str(taskDensity))
+    systemDensity += taskDensity
+
+print("System Density = " + str(systemDensity))
+
+# 5. Average response time for aperiodic tasks
+# Current testing has not allowed aperiodic task scheduling... Periodic task density is too high...

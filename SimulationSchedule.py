@@ -1,6 +1,5 @@
 import TaskSession
 import PeriodicTask
-import SortingFunctions
 import ServerPeriod
 import math
 
@@ -333,4 +332,17 @@ class SimulationSchedule(object):
         for session in self.scheduledTaskPool:
             if session.task.id == id:
                 session.print()
-        
+
+    def calculateActualStartAndEndTimes(self, task):
+        for session in self.scheduledTaskPool:
+            if session.task.id == task.id:
+                session.print()
+                if task.actualStartTime is None:
+                    task.actualStartTime = session.startTime
+                elif task.actualStartTime > session.startTime:
+                    task.actualStartTime = session.startTime
+
+                if task.actualEndTime is None:
+                    task.actualEndTime = session.endTime
+                elif task.actualEndTime < session.endTime:
+                    task.actualEndTime = session.endTime

@@ -174,6 +174,9 @@ print("Metrics Report...")
 for task in finalPeriodicTaskPool:    
     simSchedule.calculateActualStartAndEndTimes(task)
     task.printActualTimes()
+for task in aperiodicTaskPool:
+    simSchedule.calculateActualStartAndEndTimes(task)
+    task.printActualTimes()
 
 # 2. Any missed deadlines in the simulation period
 numOfDeadlineMisses = 0

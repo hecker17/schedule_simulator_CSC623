@@ -76,8 +76,10 @@ else:
 
     for task in periodicTaskPool:
         task.print()
+    print("Number of Periodic Tasks: " + str(len(periodicTaskPool)))
     for task in aperiodicTaskPool:
         task.print()
+    print("Number of Aperiodic Tasks: " + str(len(aperiodicTaskPool)))
 
 
 # Sorting Functions
@@ -169,26 +171,22 @@ simSchedule.printById("t3_4")
 print("Metrics Report...")
 
 # 1. The actual start and finish time for each job in the simulation period
-for task in finalPeriodicTaskPool:
-    if task.id == "t3_4":
-        simSchedule.calculateActualStartAndEndTimes(task)
-        task.printActualTimes()
-    elif task.id == "t4_1":
-        simSchedule.calculateActualStartAndEndTimes(task)
-        task.printActualTimes()
+for task in finalPeriodicTaskPool:    
+    simSchedule.calculateActualStartAndEndTimes(task)
+    task.printActualTimes()
 
 # 2. Any missed deadlines in the simulation period
+numOfDeadlineMisses = 0
 for task in finalPeriodicTaskPool:
-    if task.id == "t3_4":
-        if task.actualEndTime > task.deadline:
-            print("t3_4 deadline missed...")
-        else:
-            print("t3_4 finish before deadline...")
-    elif task.id == "t4_1":
-        if task.actualEndTime > task.deadline:
-            print("t4_1 deadline missed...")
-        else:
-            print("t4_1 finish before deadline...")
+    if task.actualEndTime is None:
+        print(str(task.id) + " never finished...")
+        numOfDeadlineMisses += 1
+    elif task.actualEndTime > task.deadline:
+        print(str(task.id) + " deadline missed...")
+        numOfDeadlineMisses += 1
+    else:
+        print(str(task.id) + " finished before deadline...")
+print("Deadline misses: " + str(numOfDeadlineMisses) + "/" + str(len(finalPeriodicTaskPool)))
 
 # 3. Total system utilization
 # Don't actually need to run the simulation to calculate this value
@@ -198,7 +196,6 @@ for task in periodicTaskPool:
     taskUtilization = task.executionTime / task.period
     print("Task Utilization = " + str(taskUtilization))
     systemUtilization += taskUtilization
-
 print("System Utilization = " + str(systemUtilization))
 
 # 4. Total system density
@@ -209,8 +206,21 @@ for task in periodicTaskPool:
     taskDensity = task.executionTime / min(task.deadline, task.period)
     print("Task Density = " + str(taskDensity))
     systemDensity += taskDensity
-
 print("System Density = " + str(systemDensity))
 
 # 5. Average response time for aperiodic tasks
 # Current testing has not allowed aperiodic task scheduling... Periodic task density is too high...
+cumulativeResponseTime = 0
+numOfAperiodicTaskCompletions = 0
+averageResponseTime = None
+for task in aperiodicTaskPool:
+    task.printActualTimes()
+    if task.actualStartTime is not None and task.actualEndTime is not None:
+        aperiodicTaskResponseTime = task.actualEndTime - task.actualStartTime
+        cumulativeResponseTime += aperiodicTaskResponseTime
+        numOfAperiodicTaskCompletions += 1
+    else:
+        print(str(task.id) + " failed to finish...")
+if numOfAperiodicTaskCompletions > 0:
+    averageResponseTime = cumulativeResponseTime / numOfAperiodicTaskCompletions
+print("Average Aperiodic Task response time = " + str(averageResponseTime))

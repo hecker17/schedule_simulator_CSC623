@@ -8,4 +8,7 @@ class AperiodicTask(object):
         self.actualEndTime = None
 
     def print(self):
-        print("id: " + str(self.id) + " releaseTime: " + str(self.releaseTime) + " executionTime: " + str(self.executionTime) + " remainingExecutionTime: " + str(self.remainingExecutionTime))
+        print("Aperiodic Task : id: " + str(self.id) + " releaseTime: " + str(self.releaseTime) + " executionTime: " + str(self.executionTime) + " remainingExecutionTime: " + str(self.remainingExecutionTime))
+
+    def printActualTimes(self):
+        print("Aperiodic Task : id: " + str(self.id) + " actualStartTime: " + str(self.actualStartTime) + " actualEndTime: " + str(self.actualEndTime))

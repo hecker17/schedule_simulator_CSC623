@@ -336,7 +336,7 @@ class SimulationSchedule(object):
     def calculateActualStartAndEndTimes(self, task):
         for session in self.scheduledTaskPool:
             if session.task.id == task.id:
-                session.print()
+                #session.print()
                 if task.actualStartTime is None:
                     task.actualStartTime = session.startTime
                 elif task.actualStartTime > session.startTime:

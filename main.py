@@ -38,19 +38,19 @@ if len(sys.argv) != 6:
     serverExecutionTime = 5
 
     # Set up sample periodic tasks
-    periodicTask1 = PeriodicTask.PeriodicTask(1,35,0,33,10)
-    periodicTask2 = PeriodicTask.PeriodicTask(2,35,4,28,3.5)
-    periodicTask3 = PeriodicTask.PeriodicTask(3,35,5,29,10)
+    periodicTask1 = PeriodicTask.PeriodicTask(str("T1"),float(35),float(0),float(33),float(10))
+    periodicTask2 = PeriodicTask.PeriodicTask(str("T2"),float(35),float(4),float(28),float(3.5))
+    periodicTask3 = PeriodicTask.PeriodicTask(str("T3"),float(35),float(5),float(29),float(10))
     periodicTaskPool.append(periodicTask1)
     periodicTaskPool.append(periodicTask2)
     periodicTaskPool.append(periodicTask3)
     
     # Set up sample aperiodic tasks
-    aperiodicTask1 = AperiodicTask.AperiodicTask(4,25,6)
-    aperiodicTask2 = AperiodicTask.AperiodicTask(5,45,3)
-    aperiodicTask3 = AperiodicTask.AperiodicTask(6,62,2)
-    aperiodicTask4 = AperiodicTask.AperiodicTask(7,64,2)
-    aperiodicTask5 = AperiodicTask.AperiodicTask(8,66,2)
+    aperiodicTask1 = AperiodicTask.AperiodicTask(str("A4"),float(25),float(6))
+    aperiodicTask2 = AperiodicTask.AperiodicTask(str("A5"),float(45),float(3))
+    aperiodicTask3 = AperiodicTask.AperiodicTask(str("A6"),float(62),float(2))
+    aperiodicTask4 = AperiodicTask.AperiodicTask(str("A7"),float(64),float(2))
+    aperiodicTask5 = AperiodicTask.AperiodicTask(str("A8"),float(66),float(2))
     aperiodicTaskPool.append(aperiodicTask1)
     aperiodicTaskPool.append(aperiodicTask2)
     aperiodicTaskPool.append(aperiodicTask3)
@@ -71,7 +71,7 @@ else:
     for line in taskFile.readlines():
         taskValues = line.replace('\n','').split(',')
         if taskValues[0][0] == 't' or taskValues[0][0] == 'T':
-            periodicTaskPool.append(PeriodicTask.PeriodicTask(str(taskValues[0]),int(taskValues[1]),float(taskValues[2]),float(taskValues[3]),float(taskValues[4])))
+            periodicTaskPool.append(PeriodicTask.PeriodicTask(str(taskValues[0]),float(taskValues[1]),float(taskValues[2]),float(taskValues[3]),float(taskValues[4])))
         elif taskValues[0][0] == 'a' or taskValues[0][0] == 'A':
             aperiodicTaskPool.append(AperiodicTask.AperiodicTask(str(taskValues[0]),float(taskValues[1]),float(taskValues[2])))
 
@@ -101,7 +101,11 @@ def sortReleaseTime(task):
 def calculateHyperPeriod(taskPool):
     lcm = 1
     for task in taskPool:
-        lcm = lcm * task.period // gcd(lcm, task.period)
+        if not task.period.is_integer():
+            greatestCommonDenominator = gcd(int(lcm*10), int(task.period*10))/10
+            lcm = lcm * task.period // greatestCommonDenominator
+        else:
+            lcm = lcm * task.period // gcd(int(lcm), int(task.period))
     return lcm
 
 

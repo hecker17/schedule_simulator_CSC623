@@ -128,6 +128,8 @@ class SimulationSchedule(object):
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, taskReleaseTime + potentialTaskExecutionTime, task))
                                     if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
                                         currentServerPeriod.serverExecutionStartTime = taskReleaseTime
+                                    # Set next task to begin when this just inserted session ends
+                                    taskReleaseTime = taskReleaseTime + potentialTaskExecutionTime
                                 else:
                                     elapsedExecutionTime = executionCutoff - taskReleaseTime
                                     task.remainingExecutionTime = task.remainingExecutionTime - elapsedExecutionTime
@@ -135,6 +137,8 @@ class SimulationSchedule(object):
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, executionCutoff, task))
                                     if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
                                         currentServerPeriod.serverExecutionStartTime = taskReleaseTime
+                                    # Set next task to begin when this just inserted session ends
+                                    taskReleaseTime = executionCutoff
                             else:
                                 # Set our current session to the next session...
                                 session = self.scheduledTaskPool[i+1]
@@ -161,6 +165,8 @@ class SimulationSchedule(object):
                                         taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, taskReleaseTime + potentialTaskExecutionTime, task))
                                         if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
                                             currentServerPeriod.serverExecutionStartTime = taskReleaseTime
+                                        # Set next task to begin when this just inserted session ends
+                                        taskReleaseTime = taskReleaseTime + potentialTaskExecutionTime
                                     else:
                                         elapsedExecutionTime = executionCutoff - taskReleaseTime
                                         task.remainingExecutionTime = task.remainingExecutionTime - elapsedExecutionTime
@@ -168,6 +174,8 @@ class SimulationSchedule(object):
                                         taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, executionCutoff, task))
                                         if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
                                             currentServerPeriod.serverExecutionStartTime = taskReleaseTime
+                                        # Set next task to begin when this just inserted session ends
+                                        taskReleaseTime = executionCutoff
                         else:
                             # This occurs when we release before the current session begins... We can try and insert in here...
                             if self.nextTaskExists(i):
@@ -194,6 +202,8 @@ class SimulationSchedule(object):
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, taskReleaseTime + potentialTaskExecutionTime, task))
                                     if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
                                         currentServerPeriod.serverExecutionStartTime = taskReleaseTime
+                                    # Set next task to begin when this just inserted session ends
+                                    taskReleaseTime = taskReleaseTime + potentialTaskExecutionTime
                                 else:
                                     elapsedExecutionTime = executionCutoff - taskReleaseTime
                                     task.remainingExecutionTime = task.remainingExecutionTime - elapsedExecutionTime
@@ -201,6 +211,8 @@ class SimulationSchedule(object):
                                     taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReleaseTime, executionCutoff, task))
                                     if currentServerPeriod.serverExecutionStartTime is None and self.aperiodicSchedulingAlgo == 1:
                                         currentServerPeriod.serverExecutionStartTime = taskReleaseTime
+                                    # Set next task to begin when this just inserted session ends
+                                    taskReleaseTime = executionCutoff
 
         # Add all the task sessions to the scheduled task pool and then sort it based on start times
         for task in taskSessionsToBeAdded:

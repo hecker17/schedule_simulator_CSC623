@@ -1,0 +1,19 @@
+# Lines starting with # are comments and can be ignored
+# Periodic Tasks
+5
+T1,2.5,0,2.5,0.5
+T2,5,0,5,1
+T3,10,2,9,2
+T4,15,1,14,2
+T5,20,2,18,3
+# Aperiodic Tasks 
+7
+A1,3,1
+A2,5,2
+A3,7,1.5
+A4,12,1
+A5,18,2
+A6,27,2
+A7,35,3
+# Aperiodic task server (type, ps, es)
+polling,5,2

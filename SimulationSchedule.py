@@ -120,7 +120,7 @@ class SimulationSchedule(object):
                                     executionCutoff = currentServerPeriod.serverExecutionStartTime + currentServerPeriod.serverFullExecutionTime
 
                                 if taskReleaseTime >= executionCutoff:
-                                    # Most likely occurs when using the polling schedule algorithm and we miss the cutoff
+                                    # Most likely occurs when using the polling schedule algorithm and we miss the cutoff.  Do nothing, because the servers execution budget is gone.
                                     pass
                                 elif taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
                                     task.remainingExecutionTime = task.remainingExecutionTime - potentialTaskExecutionTime
@@ -153,7 +153,7 @@ class SimulationSchedule(object):
                                         executionCutoff = currentServerPeriod.periodEndTime
 
                                     if taskReleaseTime >= executionCutoff:
-                                        # Most likely occurs when using the polling schedule algorithm and we miss the cutoff
+                                        # Most likely occurs when using the polling schedule algorithm and we miss the cutoff.  Do nothing, because the servers execution budget is gone.
                                         pass
                                     elif taskReleaseTime + potentialTaskExecutionTime <= executionCutoff:
                                         task.remainingExecutionTime = task.remainingExecutionTime - potentialTaskExecutionTime
@@ -271,6 +271,7 @@ class SimulationSchedule(object):
                     if currentTime + currentlyExecutingTask.remainingExecutionTime <= nextTaskAvailableTime:
                         self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + currentlyExecutingTask.remainingExecutionTime, currentlyExecutingTask))
                         currentTime = currentTime + currentlyExecutingTask.remainingExecutionTime
+                        currentlyExecutingTask.remainingExecutionTime -= currentlyExecutingTask.remainingExecutionTime
                         availableTaskPool.remove(currentlyExecutingTask)
                         currentlyExecutingTask = None
                     else:
@@ -285,6 +286,7 @@ class SimulationSchedule(object):
                     if currentlyExecutingTask.remainingExecutionTime <= 1:
                         self.scheduledTaskPool.append(TaskSession.TaskSession(currentTime, currentTime + currentlyExecutingTask.remainingExecutionTime, currentlyExecutingTask))
                         currentTime = currentTime + currentlyExecutingTask.remainingExecutionTime
+                        currentlyExecutingTask.remainingExecutionTime -= currentlyExecutingTask.remainingExecutionTime
                         availableTaskPool.remove(currentlyExecutingTask)
                         currentlyExecutingTask = None
                     else:

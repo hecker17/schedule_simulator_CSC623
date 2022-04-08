@@ -1,0 +1,19 @@
+# Lines starting with # are comments and can be ignored
+# Periodic Tasks
+6
+T1,2,0,2,0.4
+T2,6,0,5,1.5
+T3,9,1,9,2
+T4,18,0,17,3
+T5,27,2,25,4
+T6,36,2,36,5
+# Aperiodic Tasks 
+8
+A1,3,2
+A2,5,3
+A3,7,3.5
+A4,12,3
+A5,16,2
+A6,25,3
+A7,28,4
+A8,32,2

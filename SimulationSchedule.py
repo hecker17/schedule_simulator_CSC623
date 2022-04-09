@@ -156,6 +156,8 @@ class SimulationSchedule(object):
                                     executionCutoff = session.startTime
                                     if currentServerPeriod.serverExecutionStartTime is not None and self.aperiodicSchedulingAlgo == 1:
                                         executionCutoff = currentServerPeriod.serverExecutionStartTime + currentServerPeriod.serverFullExecutionTime
+                                        if executionCutoff > session.startTime:
+                                            executionCutoff = session.startTime
                                     elif session.startTime > currentServerPeriod.periodEndTime:
                                         executionCutoff = currentServerPeriod.periodEndTime
 

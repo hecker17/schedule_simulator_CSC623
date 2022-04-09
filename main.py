@@ -136,7 +136,6 @@ fullSimulationWindow = calculateHyperPeriod(periodicTaskPool) * 3
 print("Time Window : " + str(fullSimulationWindow))
 finalPeriodicTaskPool = []
 for task in sortedPeriodicTaskPool:
-    #task.print()
     numberOfTasks = int(fullSimulationWindow / task.period)
 
     # In our final task pool, add every job of the task
@@ -200,7 +199,7 @@ print("Average Aperiodic Task response time = " + str(averageResponseTime))
 
 # Print task results...
 print("===== Misc. All Periodic Task attributes")
-for task in finalPeriodicTaskPool:
+for task in sorted(finalPeriodicTaskPool, key=sortReadyTime):
     task.print()
 print("===== Misc. All Aperiodic Task attributes")
 for task in aperiodicTaskPool:

@@ -57,15 +57,18 @@ class SimulationSchedule(object):
                     if session.startTime >= taskReadyTime + remainingExecutionTime:
                         taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReadyTime, taskReadyTime + remainingExecutionTime, task))
                         remainingExecutionTime = 0
+                        task.remainingExecutionTime = remainingExecutionTime
                     else:
                         elapsedExecutionTime = session.startTime - taskReadyTime
                         remainingExecutionTime -= elapsedExecutionTime
                         taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReadyTime, taskReadyTime + elapsedExecutionTime, task))
                         taskReadyTime = session.endTime
+                        task.remainingExecutionTime = remainingExecutionTime
 
-            # If we iterated over all the current task sessions and we still have execution time remianing, add it
+            # If we iterated over all the current task sessions and we still have execution time remaining, add it
             if remainingExecutionTime > 0:
                 taskSessionsToBeAdded.append(TaskSession.TaskSession(taskReadyTime, taskReadyTime + remainingExecutionTime, task))
+                task.remainingExecutionTime = 0
             
             # Add all the task sessions to the scheduled task pool and then sort it based on start times
             for task in taskSessionsToBeAdded:
@@ -327,6 +330,7 @@ class SimulationSchedule(object):
         self.scheduledTaskPool = consolidatedTaskPool
 
     def trimAfter(self, fullSimulationWindow):
+        tasksToBeRemoved = []
         for session in self.scheduledTaskPool:
             if session.startTime < fullSimulationWindow and session.endTime > fullSimulationWindow:
                 reclaimedExecutionTime = session.endTime - fullSimulationWindow
@@ -334,7 +338,11 @@ class SimulationSchedule(object):
                 # Verify the execution time reclaiming works correctly...
                 session.task.remainingExecutionTime = reclaimedExecutionTime
             elif session.startTime >= fullSimulationWindow:
-                self.scheduledTaskPool.remove(session)
+                session.task.remainingExecutionTime = session.task.executionTime
+                tasksToBeRemoved.append(session)
+
+        for task in tasksToBeRemoved:
+            self.scheduledTaskPool.remove(task)
 
     def print(self):
         print("Size of finalTaskPool: " + str(len(self.scheduledTaskPool)))
@@ -350,7 +358,6 @@ class SimulationSchedule(object):
     def calculateActualStartAndEndTimes(self, task):
         for session in self.scheduledTaskPool:
             if session.task.id == task.id:
-                #session.print()
                 if task.actualStartTime is None:
                     task.actualStartTime = session.startTime
                 elif task.actualStartTime > session.startTime:

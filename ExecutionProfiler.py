@@ -2,6 +2,11 @@ import TaskSession
 import PeriodicTask
 import ServerPeriod
 import SimulationSchedule
+#matplotlibPresent = True
+#try:
+#    import matplotlib
+#except ModuleNotFoundError:
+#    matplotlibPresent = False
 
 class ExecutionProfiler(object):
     def __init__(self, simulationSchedule, finalPeriodicTaskPool, periodicTaskPool, aperiodicTaskPool):
@@ -24,9 +29,11 @@ class ExecutionProfiler(object):
             if task.actualEndTime is None:
                 # Task never finished...
                 numOfDeadlineMisses += 1
+                task.deadlineMissed = True
             elif task.actualEndTime > task.deadline:
                 # Task deadline missed...
                 numOfDeadlineMisses += 1
+                task.deadlineMissed = True
             else:
                 # Task finished before deadline...
                 pass
@@ -60,3 +67,10 @@ class ExecutionProfiler(object):
         if numOfAperiodicTaskCompletions > 0:
             averageResponseTime = cumulativeResponseTime / numOfAperiodicTaskCompletions
         return averageResponseTime
+
+    def plotTaskSessions(self):
+        matplotlibPresent = False
+        if matplotlibPresent:
+            pass
+        else:
+            print("Python3: matplotlib library is not installed...")

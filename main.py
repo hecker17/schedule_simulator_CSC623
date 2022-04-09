@@ -136,7 +136,7 @@ fullSimulationWindow = calculateHyperPeriod(periodicTaskPool) * 3
 print("Time Window : " + str(fullSimulationWindow))
 finalPeriodicTaskPool = []
 for task in sortedPeriodicTaskPool:
-    task.print()
+    #task.print()
     numberOfTasks = int(fullSimulationWindow / task.period)
 
     # In our final task pool, add every job of the task
@@ -148,13 +148,16 @@ for task in sortedPeriodicTaskPool:
 print("Size of finalPeriodicTaskPool: " + str(len(finalPeriodicTaskPool)))
 print("Size of sortedAperiodicTaskPool: " + str(len(sortedAperiodicTaskPool)))
 # Insert static priority tasks or simulate the dynamic schedule
-if periodicSchedulingAlgo == 1 or periodicSchedulingAlgo == 2 or periodicSchedulingAlgo == 3:
+if periodicSchedulingAlgo == 1:
+    # The FCFS algorithm places tasks as they arrive into a queue and executes the first task in the queue, hence we sort the task pool by arrival time
+    finalPeriodicTaskPool = sorted(finalPeriodicTaskPool, key=sortReadyTime)
     for task in finalPeriodicTaskPool:
         simSchedule.insert(task)
-    simSchedule.print()
+elif periodicSchedulingAlgo == 2 or periodicSchedulingAlgo == 3:
+    for task in finalPeriodicTaskPool:
+        simSchedule.insert(task)
 elif periodicSchedulingAlgo == 4 or periodicSchedulingAlgo == 5:
     simSchedule.simulateDynamicSchedule(fullSimulationWindow, finalPeriodicTaskPool, periodicSchedulingAlgo)
-    simSchedule.print()
 
 
 # Aperiodic task insertion
@@ -168,23 +171,39 @@ simSchedule.trimAfter(fullSimulationWindow)
 
 
 # Print final simulation schedule
+print("===== Final Simulation Schedule")
 simSchedule.print()
 
 
 # Calculate and print the required metrics
-print("Execution Profile Report...")
+print("===== Execution Profile Report...")
 executionProfiler = ExecutionProfiler.ExecutionProfiler(simSchedule, finalPeriodicTaskPool, periodicTaskPool, aperiodicTaskPool)
 # 1. The actual start and finish time for each job in the simulation period
+print("===== 1. The actual start and finish time for each job in the simulation period")
 executionProfiler.calculateActualStartAndEndTimes()
 # 2. Any missed deadlines in the simulation period
+print("===== 2. Any missed deadlines in the simulation period")
 numOfDeadlineMisses = executionProfiler.calculateAmountOfDeadlinesMissed()
 print("Deadline misses: " + str(numOfDeadlineMisses) + "/" + str(len(finalPeriodicTaskPool)))
 # 3. Total system utilization
+print("===== 3. Total system utilization")
 systemUtilization = executionProfiler.calculateTotalSystemUtilization()
 print("System Utilization = " + str(systemUtilization))
 # 4. Total system density
+print("===== 4. Total system density")
 systemDensity = executionProfiler.calculateTotalSystemDensity()
 print("System Density = " + str(systemDensity))
 # 5. Average response time for aperiodic tasks
+print("===== 5. Average response time for aperiodic tasks")
 averageResponseTime = executionProfiler.calculateAverageAperiodicTaskResponseTime()
 print("Average Aperiodic Task response time = " + str(averageResponseTime))
+
+# Print task results...
+print("===== Misc. All Periodic Task attributes")
+for task in finalPeriodicTaskPool:
+    task.print()
+print("===== Misc. All Aperiodic Task attributes")
+for task in aperiodicTaskPool:
+    task.print()
+
+executionProfiler.plotTaskSessions()

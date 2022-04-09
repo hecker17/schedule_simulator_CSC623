@@ -170,7 +170,7 @@ simSchedule.trimAfter(fullSimulationWindow)
 
 
 # Print final simulation schedule
-print("===== Final Simulation Schedule")
+print("===== Final Simulation Schedule in Real Time")
 simSchedule.print()
 
 
